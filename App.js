@@ -85,7 +85,6 @@ function WelcomeScreen({ height, onLogin, onRegister, onExplore, onSocialUnavail
   const introProgress = React.useRef(new Animated.Value(0)).current;
   const animationStarted = React.useRef(false);
   const animationInterval = React.useRef(null);
-  const symbolWidth = 112;
   const loginMotion = (start) => ({
     opacity: introProgress.interpolate({
       inputRange: [start, Math.min(start + 0.06, 1)],
@@ -144,6 +143,11 @@ function WelcomeScreen({ height, onLogin, onRegister, onExplore, onSocialUnavail
     outputRange: [8, 0],
     extrapolate: "clamp",
   });
+  const logoOpacity = introProgress.interpolate({
+    inputRange: [0, 0.14],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
 
   return (
     <View
@@ -158,24 +162,12 @@ function WelcomeScreen({ height, onLogin, onRegister, onExplore, onSocialUnavail
           ]}
         >
           <View style={styles.welcomeLogoClip}>
-            <Animated.View
-              style={{
-                width: introProgress.interpolate({
-                  inputRange: [0, 0.08],
-                  outputRange: [0, symbolWidth],
-                  extrapolate: "clamp",
-                }),
-                height: 94,
-                overflow: "hidden",
-              }}
-            >
-              <Image
-                source={require("./static/logo-160.png")}
-                style={styles.welcomeLogoImage}
-                resizeMode="contain"
-                accessibilityLabel="Wize logo"
-              />
-            </Animated.View>
+            <Animated.Image
+              source={require("./static/logo-160.png")}
+              style={[styles.welcomeLogoImage, { opacity: logoOpacity }]}
+              resizeMode="contain"
+              accessibilityLabel="Wize logo"
+            />
           </View>
           <Animated.View
             style={{
@@ -254,9 +246,7 @@ function WelcomeScreen({ height, onLogin, onRegister, onExplore, onSocialUnavail
           <MaterialIcons name="explore" size={17} color="#147998" />
           <Text style={styles.welcomeExploreText}>Explore destinations</Text>
         </TouchableOpacity>
-        <Text style={styles.welcomeSocialNote}>
-          Google and Facebook sign-in aren’t configured yet.
-        </Text>
+        
       </View>
         </View>
       </Animated.View>
@@ -1182,7 +1172,7 @@ function App() {
           <View style={styles.sectionHeadingRow}>
             <View>
               <Text style={styles.homeSectionTitle}>Explore destinations</Text>
-              <Text style={styles.homeSectionSubtitle}>Real places across Asia</Text>
+              <Text style={styles.homeSectionSubtitle}>Explore places across Asia</Text>
             </View>
             <TouchableOpacity
               accessibilityRole="button"
@@ -1214,7 +1204,7 @@ function App() {
             <View>
               <Text style={styles.homeSectionTitle}>Featured hotels</Text>
               <Text style={styles.homeSectionSubtitle}>
-                {hotelResults.length ? "From your latest live search" : "Check live availability for your dates"}
+                {hotelResults.length ? "From your latest live search" : "Check hotels availability for your dates"}
               </Text>
             </View>
             <MaterialIcons name="hotel" size={23} color="#147998" />
@@ -1265,7 +1255,7 @@ function App() {
             <Card style={styles.featuredHotelEmpty}>
               <MaterialIcons name="hotel" size={26} color="#147998" />
               <View style={styles.emptyCopy}>
-                <Text style={styles.cardTitle}>Search live hotel availability</Text>
+                <Text style={styles.cardTitle}>Search hotel availability</Text>
                 <Text style={styles.muted}>Choose a trip and dates to see current offers.</Text>
               </View>
               <Button icon="search" onPress={() => openTravelSearch("hotels")}>Search hotels</Button>
@@ -1854,7 +1844,7 @@ function App() {
               </Card>
             );
           })}
-          <Text style={styles.safetyNote}>TravelWise does not book, buy, or process payments.</Text>
+          
         </View>
       );
     }
@@ -2708,8 +2698,8 @@ const styles = StyleSheet.create({
   welcomeOptionsGroup: { width: "100%" },
   welcomeLogoStage: { height: 172, alignItems: "center", justifyContent: "flex-start", overflow: "visible" },
   welcomeLogoGroup: { alignItems: "center", width: "100%" },
-  welcomeLogoClip: { width: 112, height: 94, alignItems: "flex-start", overflow: "hidden" },
-  welcomeLogoImage: { width: 112, height: 94 },
+  welcomeLogoClip: { width: 100, height: 84, alignItems: "flex-start", overflow: "hidden" },
+  welcomeLogoImage: { width: 100, height: 84 },
   welcomeTravelDot: { position: "absolute", width: 10, height: 10, borderRadius: 5, top: 34, left: "50%", marginLeft: -5, backgroundColor: "#13c4e8", borderWidth: 2, borderColor: "#ffffff" },
   welcomeWordmark: { color: "#0756ad", fontSize: 38, fontWeight: "900", letterSpacing: -1.6, lineHeight: 44 },
   welcomeLoginContent: { marginTop: 8, marginBottom: 12 },
