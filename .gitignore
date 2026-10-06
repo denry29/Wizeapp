@@ -1,0 +1,56 @@
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+node_modules/
+.expo/
+web-build/
+
+# --- Testing / tooling ----------------------------------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- Secrets and local configuration --------------------------------------
+.env
+.env.*
+!.env.example
+.backend.env
+.backend.env.*
+.secret_key
+*.secret
+
+# --- Database (regenerate with scripts/init_db.py + scripts/seed_destinations.py)
+database/*.db
+database/*.db-wal
+database/*.db-shm
+instance/
+*.sqlite
+*.sqlite3
+
+# --- OS / editor ----------------------------------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- Temporary output from local debugging -------------------------------
+/run_tests.txt
+/summary.txt
+/full.txt
+/o_*.txt
+/e_*.txt
+meta_*.txt
+tail_*.txt
+res_*.txt
+r1.txt r2.txt r3.txt r4.txt r5.txt
+h1.txt h2.txt h3.txt h1a.txt h2a.txt h3a.txt
+g1.txt g1a.txt q1.txt q1a.txt cmdout.txt fulla.txt
+hb.txt hba.txt runA*.txt map2.txt routes_map.txt

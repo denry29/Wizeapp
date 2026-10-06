@@ -1,0 +1,15 @@
+# Wize - Trip Planner
+# Python 3.9+ required. Only Flask + test tooling, no ORM, no other frameworks.
+
+Flask==3.0.3
+Werkzeug==3.0.3          # pulled in by Flask; pinned for reproducible hashing
+Jinja2==3.1.4
+itsdangerous==2.2.0
+click==8.1.7
+blinker==1.8.2
+
+# --- testing ---------------------------------------------------------------
+pytest==8.2.2
+pytest-cov==5.0.0
+
+# NOTE: sqlite3 ships with CPython, so no database driver is installed.

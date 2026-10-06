@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Wize",
+    "slug": "travelwise",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "web": {
+      "bundler": "metro",
+      "favicon": "./static/favicon-32.png"
+    },
+    "plugins": [
+      "@react-native-vector-icons/material-icons",
+      "expo-font"
+    ]
+  }
+}

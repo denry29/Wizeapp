@@ -1,0 +1,1 @@
+"""Manager layer: business rules and database access per feature."""

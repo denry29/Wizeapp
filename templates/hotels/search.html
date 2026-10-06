@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Find a place to stay in Asia</h1>
+    <p class="muted">Live hotel and accommodation results from StayingAPI.</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('trips.list_trips') }}">My trips</a>
+</div>
+
+<form id="hotel-search-form" class="card hotel-search-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="field-row">
+    <div>
+      <label for="hotel-city">City</label>
+      <input id="hotel-city" name="city" type="text" maxlength="80"
+             placeholder="Tokyo" required>
+    </div>
+    <div>
+      <label for="hotel-country">Country / region</label>
+      <select id="hotel-country" name="country" required>
+        {% for code, name in countries.items() %}
+          <option value="{{ code }}" {% if code == 'JP' %}selected{% endif %}>
+            {{ name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="hotel-check-in">Check-in</label>
+      <input id="hotel-check-in" name="check_in" type="date" required>
+    </div>
+    <div>
+      <label for="hotel-check-out">Check-out</label>
+      <input id="hotel-check-out" name="check_out" type="date" required>
+    </div>
+  </div>
+  <div class="field-row">
+    <div>
+      <label for="hotel-adults">Adults</label>
+      <input id="hotel-adults" name="adults" type="number" value="2"
+             min="1" max="20" required>
+    </div>
+    <div>
+      <label for="hotel-rooms">Rooms</label>
+      <input id="hotel-rooms" name="rooms" type="number" value="1"
+             min="1" max="10" required>
+    </div>
+    <div>
+      <label for="hotel-children">Children</label>
+      <input id="hotel-children" name="children" type="number" value="0"
+             min="0" max="10">
+    </div>
+    <div>
+      <label for="hotel-child-ages">Child ages</label>
+      <input id="hotel-child-ages" name="child_ages" type="text"
+             placeholder="e.g. 4, 8">
+      <span class="hint">Enter one comma-separated age for each child.</span>
+    </div>
+    <div>
+      <label for="hotel-currency">Currency preference</label>
+      <select id="hotel-currency" name="currency">
+        {% for code in currencies %}
+          <option value="{{ code }}"
+                  {% if code == default_currency %}selected{% endif %}>
+            {{ code }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-primary" type="submit">Search hotels</button>
+  <p class="hint">Displayed prices remain in the currency reported by the
+    provider. Currency preference is not an exchange-rate conversion.</p>
+</form>
+
+<div id="hotel-search-status" class="flash" role="status" aria-live="polite"
+     hidden></div>
+<section id="hotel-results" class="hotel-results" aria-live="polite"></section>
+
+<div id="trip-options" data-trips="{{ trips|tojson|forceescape }}" hidden></div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/hotels.js') }}"></script>
+{% endblock %}

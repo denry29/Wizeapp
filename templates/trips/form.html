@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Edit trip' if trip else 'New trip' }}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('trips.list_trips') }}">Back to trips</a>
+</div>
+
+<div class="card form-card">
+  {% if errors.form %}<div class="flash flash-error">{{ errors.form }}</div>{% endif %}
+
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="trip_name">Trip name</label>
+    <input id="trip_name" name="trip_name" type="text" required
+           value="{{ form.trip_name or '' }}">
+    {% if errors.trip_name %}<p class="field-error">{{ errors.trip_name }}</p>{% endif %}
+
+    <div class="field-row">
+      <div>
+        <label for="start_date">Start date</label>
+        <input id="start_date" name="start_date" type="date" required
+               value="{{ form.start_date or '' }}">
+        {% if errors.start_date %}
+          <p class="field-error">{{ errors.start_date }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <label for="end_date">End date</label>
+        <input id="end_date" name="end_date" type="date" required
+               value="{{ form.end_date or '' }}">
+        {% if errors.end_date %}<p class="field-error">{{ errors.end_date }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div>
+        <label for="budget">Budget (optional)</label>
+        <input id="budget" name="budget" type="number" step="0.01" min="0"
+               value="{{ form.budget if form.budget is not none else '' }}">
+        {% if errors.budget %}<p class="field-error">{{ errors.budget }}</p>{% endif %}
+      </div>
+      <div>
+        <label for="budget_currency">Budget currency</label>
+        <select id="budget_currency" name="budget_currency">
+          {% for code in ['USD', 'EUR', 'GBP', 'JPY', 'THB', 'VND', 'KRW', 'CNY',
+                          'SGD', 'MYR', 'IDR', 'PHP', 'INR', 'LKR', 'AED', 'SAR'] %}
+            <option value="{{ code }}"
+              {% if (form.budget_currency or 'USD') == code %}selected{% endif %}>
+              {{ code }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      {% for status in statuses %}
+        <option value="{{ status }}"
+          {% if (form.status or 'planning') == status %}selected{% endif %}>
+          {{ status|capitalize }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="4"
+              maxlength="1000">{{ form.description or '' }}</textarea>
+
+    <button type="submit" class="btn btn-primary">
+      {{ 'Save changes' if trip else 'Create trip' }}
+    </button>
+  </form>
+</div>
+{% endblock %}

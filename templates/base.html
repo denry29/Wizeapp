@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>{{ page_title or 'Wize' }} - Wize</title>
+
+  <!-- App icons: browser tab, iOS "Add to Home Screen", Android launcher -->
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32.png') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('web_manifest') }}">
+
+  <!-- Once added to the home screen: name under the icon, branded status bar -->
+  <meta name="theme-color" content="#0877d8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Wize">
+  <meta name="application-name" content="Wize">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="{{ url_for('dashboard.index') }}">
+      <img class="brand-logo" src="{{ url_for('static', filename='logo-160.png') }}"
+           alt="" width="40" height="40">
+      <span class="brand-name">Wize</span>
+    </a>
+    <nav class="app-nav">
+      {% if is_authenticated %}
+        <a href="{{ url_for('dashboard.index') }}">Dashboard</a>
+        <a href="{{ url_for('trips.list_trips') }}">My trips</a>
+        <a href="{{ url_for('destinations.browse') }}">Destinations</a>
+        <a href="{{ url_for('hotels.search_page') }}">Hotels</a>
+        <a href="{{ url_for('auth.profile') }}">Profile</a>
+        <form method="post" action="{{ url_for('auth.logout_page') }}" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-ghost">Sign out</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login_page') }}">Sign in</a>
+        <a class="btn btn-primary" href="{{ url_for('auth.register_page') }}">Create account</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="app-footer">
+    <p>Wize - Trip Planner. Flask + SQLite backend project.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

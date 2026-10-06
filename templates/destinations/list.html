@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Browse Asian destinations</h1>
+    <p class="muted">{{ total }} attractions available in the catalogue.</p>
+  </div>
+</div>
+
+<form method="get" class="filter-bar">
+  <input type="search" name="search" placeholder="Search by name"
+         value="{{ filters.search or '' }}">
+  <select name="country">
+    <option value="">All countries</option>
+    {% for code in countries %}
+      <option value="{{ code }}" {% if filters.country == code %}selected{% endif %}>{{ code }}</option>
+    {% endfor %}
+  </select>
+  {% if cities %}
+    <select name="city">
+      <option value="">All cities</option>
+      {% for place in cities %}
+        <option value="{{ place }}" {% if filters.city == place %}selected{% endif %}>
+          {{ place }}
+        </option>
+      {% endfor %}
+    </select>
+  {% endif %}
+  <select name="category">
+    <option value="">All categories</option>
+    {% for value in categories %}
+      <option value="{{ value }}" {% if filters.category == value %}selected{% endif %}>
+        {{ value|replace('_', ' ')|capitalize }}
+      </option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-ghost">Apply</button>
+</form>
+
+{% if destinations %}
+  <ul class="dest-grid">
+    {% for d in destinations %}
+      <li class="dest-card">
+        <a href="{{ url_for('destinations.detail', destination_id=d.destination_id) }}">
+          {% if d.image_url %}
+            {# A stored Wikimedia URL can 404 later; reveal the placeholder
+               instead of showing the browser's broken-image icon. #}
+            <img src="{{ d.image_url }}" alt="{{ d.name }}" loading="lazy"
+                 onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
+            <div class="dest-placeholder" aria-hidden="true" hidden>{{ d.name[:1] }}</div>
+          {% else %}
+            <div class="dest-placeholder" aria-hidden="true">{{ d.name[:1] }}</div>
+          {% endif %}
+          <h2>{{ d.name }}</h2>
+        </a>
+        <p class="muted small">{{ d.location_label() }}</p>
+        <span class="badge">{{ d.category|replace('_', ' ')|capitalize }}</span>
+        <p class="small">{{ d.fee_label() }}</p>
+        {% if d.image_url and d.get('image_license') %}
+          {% include "destinations/_attribution.html" %}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if pagination.pages > 1 %}
+    <nav class="pagination">
+      {% if pagination.has_prev %}
+        <a class="btn btn-ghost"
+           href="{{ url_for('destinations.browse', page=pagination.page - 1, search=filters.search, country=filters.country, city=filters.city, category=filters.category) }}">Previous</a>
+      {% endif %}
+      <span class="muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+      {% if pagination.has_next %}
+        <a class="btn btn-ghost"
+           href="{{ url_for('destinations.browse', page=pagination.page + 1, search=filters.search, country=filters.country, city=filters.city, category=filters.category) }}">Next</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  <div class="empty-state">
+    <p>No destinations match these filters.</p>
+    <a class="btn btn-ghost" href="{{ url_for('destinations.browse') }}">Clear filters</a>
+  </div>
+{% endif %}
+{% endblock %}

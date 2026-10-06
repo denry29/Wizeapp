@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1>Create your account</h1>
+  <p class="muted">Plan trips, browse Asian destinations and track your budget.</p>
+
+  {% if errors.form %}<div class="flash flash-error">{{ errors.form }}</div>{% endif %}
+
+  <form method="post" action="{{ url_for('auth.register_page') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="full_name">Full name</label>
+    <input id="full_name" name="full_name" type="text" required
+           value="{{ form.full_name or '' }}">
+    {% if errors.full_name %}<p class="field-error">{{ errors.full_name }}</p>{% endif %}
+
+    <label for="email">E-mail address</label>
+    <input id="email" name="email" type="email" autocomplete="email" required
+           value="{{ form.email or '' }}">
+    {% if errors.email %}<p class="field-error">{{ errors.email }}</p>{% endif %}
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password"
+           autocomplete="new-password" minlength="8" required>
+    {% if errors.password %}<p class="field-error">{{ errors.password }}</p>{% endif %}
+    <p class="hint">At least 8 characters, mixing letters and numbers.</p>
+
+    <label for="confirm_password">Confirm password</label>
+    <input id="confirm_password" name="confirm_password" type="password"
+           autocomplete="new-password" required>
+    {% if errors.confirm_password %}
+      <p class="field-error">{{ errors.confirm_password }}</p>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary btn-block">Create account</button>
+  </form>
+
+  <p class="muted small">
+    Already registered? <a href="{{ url_for('auth.login_page') }}">Sign in</a>.
+  </p>
+</div>
+{% endblock %}

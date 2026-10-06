@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="empty-state">
+  <h1>404 - Not found</h1>
+  <p>{{ message or 'We could not find the page you were looking for.' }}</p>
+  <a class="btn btn-primary" href="{{ url_for('dashboard.index') }}">Back to dashboard</a>
+</div>
+{% endblock %}

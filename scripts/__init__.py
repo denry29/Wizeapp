@@ -1,0 +1,1 @@
+"""Helper scripts for Wize (database init and data seeding)."""

@@ -1,0 +1,25 @@
+{# Attribution line for a Commons image.
+
+   Included from destinations/list.html and destinations/detail.html with the
+   destination model in a variable called ``d``.  Wikimedia's licence terms
+   require crediting the author, naming the licence and linking the source
+   page - all three are rendered here.
+
+   Expects: d.image_source_url, d.image_creator, d.image_license,
+            d.image_license_url, d.image_title
+#}
+<p class="photo-credit">
+  Photo:
+  {% if d.image_creator %}{{ d.image_creator }}{% else %}Unknown author{% endif %}
+  {%- if d.image_license %} &middot; {{ d.image_license }}{% endif %}
+  {%- if d.image_source_url %}
+    &middot;
+    <a href="{{ d.image_source_url }}" rel="noopener nofollow external"
+       target="_blank">Wikimedia Commons</a>
+  {%- endif %}
+  {%- if d.image_license_url %}
+    &middot;
+    <a href="{{ d.image_license_url }}" rel="noopener nofollow license external"
+       target="_blank">licence terms</a>
+  {%- endif %}
+</p>

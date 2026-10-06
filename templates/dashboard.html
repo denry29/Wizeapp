@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <a class="btn btn-primary" href="{{ url_for('trips.create_trip') }}">New trip</a>
+</div>
+
+{% if summary.user %}
+  <p class="muted">Signed in as <strong>{{ summary.user.full_name }}</strong>.</p>
+{% endif %}
+
+<section class="stat-grid">
+  <div class="stat-card">
+    <span class="stat-label">Total trips</span>
+    <span class="stat-value">{{ summary.trips.total }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Upcoming</span>
+    <span class="stat-value">{{ summary.trips.upcoming }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Completed</span>
+    <span class="stat-value">{{ summary.trips.completed }}</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-label">Pending items</span>
+    <span class="stat-value">{{ summary.checklists.pending_items }}</span>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Expenses</h2>
+  <p class="stat-big">{{ summary.expenses.total_display }}</p>
+  {% if summary.expenses.currency_count > 1 %}
+    <p class="hint">
+      You have {{ summary.expenses.currency_count }} currencies recorded.
+      Amounts are kept separate and never converted automatically.
+    </p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Next trip</h2>
+  {% if summary.trips.next_trip %}
+    {% set trip = summary.trips.next_trip %}
+    <p><strong>{{ trip.trip_name }}</strong></p>
+    <p class="muted">{{ trip.start_date }} to {{ trip.end_date }} - {{ trip.status }}</p>
+    <a class="btn btn-ghost" href="{{ url_for('trips.trip_detail', trip_id=trip.trip_id) }}">
+      Open trip
+    </a>
+  {% else %}
+    <p class="muted">No upcoming trips yet.</p>
+    <a class="btn btn-primary" href="{{ url_for('trips.create_trip') }}">Plan your first trip</a>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Upcoming schedule</h2>
+  {% if summary.schedules.upcoming %}
+    <ul class="list">
+      {% for activity in summary.schedules.upcoming %}
+        <li>
+          <strong>{{ activity.activity_date }}</strong>
+          <span class="muted">{{ activity.time_label }}</span>
+          {{ activity.activity_name }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No activities scheduled.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Pending checklist items</h2>
+  {% if summary.checklists.pending_preview %}
+    <ul class="list">
+      {% for item in summary.checklists.pending_preview %}
+        <li>{{ item.item_name }}
+          <span class="muted small">- {{ item.trip_name }} / {{ item.checklist_name }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">Nothing left to pack.</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>Catalogue</h2>
+  <p class="muted">
+    {{ summary.catalogue.total_destinations }} predefined Asian destinations
+    across {{ summary.catalogue.countries }} countries.
+    <a href="{{ url_for('destinations.browse') }}">Browse them</a>.
+  </p>
+</section>
+{% endblock %}

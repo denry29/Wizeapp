@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ trip.trip_name }}</h1>
+    <p class="muted">
+      {{ trip.start_date }} &rarr; {{ trip.end_date }}
+      &middot; {{ trip.duration_days }} day{{ '' if trip.duration_days == 1 else 's' }}
+      <span class="badge badge-{{ trip.status }}">{{ trip.status }}</span>
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost"
+       href="{{ url_for('trips.edit_trip', trip_id=trip.trip_id) }}">Edit</a>
+    <form method="post" action="{{ url_for('trips.delete_trip', trip_id=trip.trip_id) }}"
+          class="inline-form" data-confirm="Delete this trip and everything in it?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+{% set form_errors = form_errors or {} %}
+{% if form_errors.form %}<div class="flash flash-error">{{ form_errors.form }}</div>{% endif %}
+
+<nav class="tabs">
+  <a href="#destinations">Destinations</a>
+  <a href="#itinerary">Itinerary</a>
+  <a href="#travel-options">Hotels &amp; flights</a>
+  <a href="#expenses">Expenses</a>
+  <a href="#checklists">Checklists</a>
+</nav>
+
+<!-- ------------------------------------------------------- destinations -->
+<section class="card" id="destinations">
+  <h2>Destinations</h2>
+
+  {% if linked_destinations %}
+    <ul class="list">
+      {% for item in linked_destinations %}
+        {% set d = item.destination %}
+        <li class="dest-row">
+          <div>
+            <a href="{{ url_for('destinations.detail', destination_id=d.destination_id) }}">
+              <strong>{{ d.name }}</strong>
+            </a>
+            <span class="muted small">{{ d.location_label() }}</span>
+            {% if item.payload.visit_date %}
+              <span class="badge">visit {{ item.payload.visit_date }}</span>
+            {% endif %}
+            {% if d.is_custom %}<span class="badge badge-custom">custom</span>{% endif %}
+            {% if d.description %}<p class="small">{{ d.description }}</p>{% endif %}
+          </div>
+          <form method="post"
+                action="{{ url_for('destinations.remove_from_trip', trip_id=trip.trip_id, link_id=item.trip_destination_id) }}"
+                class="inline-form" data-confirm="Remove this destination from the trip?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No destinations attached yet.</p>
+  {% endif %}
+
+  <h3>Add from the catalogue</h3>
+  <form method="post" action="{{ url_for('destinations.add_to_trip', trip_id=trip.trip_id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field-row">
+      <div>
+        <label for="destination_id">Destination</label>
+        <select id="destination_id" name="destination_id" required>
+          {% for option in destination_choices %}
+            <option value="{{ option.destination_id }}">
+              {{ option.name }} - {{ option.location_label() }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="visit_date">Visit date</label>
+        <input id="visit_date" name="visit_date" type="date"
+               min="{{ trip.start_date }}" max="{{ trip.end_date }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Add destination</button>
+  </form>
+
+  <details class="disclosure">
+    <summary>Add a custom destination</summary>
+    <form method="post" action="{{ url_for('destinations.add_to_trip', trip_id=trip.trip_id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field-row">
+        <div>
+          <label for="c_name">Name</label>
+          <input id="c_name" name="name" type="text" required>
+        </div>
+        <div>
+          <label for="c_country">Country</label>
+          <input id="c_country" name="country" type="text" required>
+        </div>
+        <div>
+          <label for="c_city">City / locality</label>
+          <input id="c_city" name="city" type="text">
+        </div>
+      </div>
+      <label for="c_desc">Description</label>
+      <textarea id="c_desc" name="description" rows="2"></textarea>
+      <button type="submit" class="btn btn-primary">Add custom destination</button>
+    </form>
+  </details>
+</section>
+
+<!-- ----------------------------------------------------------- itinerary -->
+<section class="card" id="itinerary">
+  <h2>Itinerary</h2>
+
+  {% if itinerary %}
+    {% for day, activities in itinerary.items() %}
+      <h3>{{ day }}</h3>
+      <ul class="list">
+        {% for activity in activities %}
+          <li class="dest-row">
+            <div>
+              <strong>{{ activity.activity_name }}</strong>
+              <span class="muted">{{ activity.time_label }}</span>
+              {% if activity.destination_name %}
+                <p class="small muted">at {{ activity.destination_name }}</p>
+              {% endif %}
+              {% if activity.notes %}<p class="small">{{ activity.notes }}</p>{% endif %}
+            </div>
+            <form method="post"
+                  action="{{ url_for('schedules.delete_activity', schedule_id=activity.schedule_id) }}"
+                  class="inline-form" data-confirm="Delete this activity?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-ghost btn-sm">Delete</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endfor %}
+  {% else %}
+    <p class="muted">No activities planned yet.</p>
+  {% endif %}
+
+  <h3>Add an activity</h3>
+  <form method="post" action="{{ url_for('schedules.add_activity', trip_id=trip.trip_id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field-row">
+      <div>
+        <label for="activity_name">Activity</label>
+        <input id="activity_name" name="activity_name" type="text" required maxlength="120">
+      </div>
+      <div>
+        <label for="activity_date">Date</label>
+        <input id="activity_date" name="activity_date" type="date" required
+               min="{{ trip.start_date }}" max="{{ trip.end_date }}">
+      </div>
+    </div>
+    <div class="field-row">
+      <div>
+        <label for="start_time">Start time</label>
+        <input id="start_time" name="start_time" type="time">
+      </div>
+      <div>
+        <label for="end_time">End time</label>
+        <input id="end_time" name="end_time" type="time">
+      </div>
+      <div>
+        <label for="sched_destination">Destination (optional)</label>
+        <select id="sched_destination" name="destination_id">
+          <option value="">None</option>
+          {% for item in linked_destinations %}
+            <option value="{{ item.destination.destination_id }}">
+              {{ item.destination.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <label for="sched_notes">Notes</label>
+    <input id="sched_notes" name="notes" type="text" maxlength="500">
+    <button type="submit" class="btn btn-primary">Add activity</button>
+  </form>
+</section>
+<!-- ------------------------------------------------------- saved options -->
+<section class="card" id="travel-options">
+  <div class="page-head">
+    <div>
+      <h2>Hotels &amp; flights</h2>
+      <p class="muted small">Saved provider offers are planning estimates;
+        no booking or purchase is made.</p>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('hotels.search_page') }}">
+      Search hotels
+    </a>
+  </div>
+  {% if saved_options %}
+    <ul class="list">
+      {% for option in saved_options %}
+        {% set details = option.details %}
+        <li class="dest-row">
+          <div class="saved-option-content">
+            {% if details.image_url %}
+              <img class="saved-option-image" src="{{ details.image_url }}"
+                   alt="{{ option.title }} property photo" loading="lazy"
+                   onerror="this.hidden=true">
+            {% endif %}
+            <div>
+              <strong>{{ option.title }}</strong>
+              <span class="badge">{{ option.option_type }}</span>
+              {% if details.location %}
+                <p class="muted small">
+                  {{ details.location.city or '' }}
+                  {% if details.location.region %}, {{ details.location.region }}{% endif %}
+                  {% if details.location.country %}, {{ details.location.country }}{% endif %}
+                  {% if details.location.address %}, {{ details.location.address }}{% endif %}
+                </p>
+              {% endif %}
+              {% if option.option_type == 'hotel' and details.dates %}
+                <p class="small">
+                  {{ details.dates.check_in }} &rarr; {{ details.dates.check_out }}
+                  &middot; {{ details.nights or '' }} night(s)
+                  &middot; {{ details.rooms or '' }} room(s)
+                </p>
+              {% endif %}
+              {% if details.rating is not none %}
+                <p class="small">Guest rating {{ details.rating }}
+                  {% if details.rating_scale %}/ {{ details.rating_scale }}{% endif %}
+                  {% if details.review_count is not none %}
+                    &middot; {{ details.review_count }} reviews
+                  {% endif %}
+                </p>
+              {% endif %}
+              {% if details.price_per_night is not none and details.currency %}
+                <p class="small">
+                  {{ '{:,.2f}'.format(details.price_per_night|float) }}
+                  {{ details.currency }} / night
+                </p>
+              {% endif %}
+              {% if option.amount is not none and option.currency %}
+                <p class="money">
+                  Official stay total:
+                  {{ '{:,.2f}'.format(option.amount|float) }} {{ option.currency }}
+                </p>
+              {% else %}
+                <p class="muted small">Provider did not return a total price.</p>
+              {% endif %}
+              {% if details.booking_url and details.booking_url.startswith('https://') %}
+                <a href="{{ details.booking_url }}" target="_blank"
+                   rel="noopener noreferrer">View provider</a>
+              {% endif %}
+            </div>
+          </div>
+          <form method="post"
+                action="{{ url_for('hotels.delete_saved_option', trip_id=trip.trip_id, option_id=option.option_id) }}"
+                class="inline-form" data-confirm="Remove this saved travel option?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">Remove</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No hotels or flights saved yet.</p>
+  {% endif %}
+</section>
+<!-- ------------------------------------------------------------ expenses -->
+<section class="card" id="expenses">
+  <h2>Expenses</h2>
+  <div class="trip-cost-summary">
+    <div>
+      <strong>Planned estimates</strong>
+      {% if trip_costs.planned %}
+        {% for currency, amount in trip_costs.planned.items() %}
+          <span class="money">{{ '{:,.2f}'.format(amount) }} {{ currency }}</span>
+        {% endfor %}
+      {% else %}
+        <span class="muted">None yet</span>
+      {% endif %}
+    </div>
+    <div>
+      <strong>Actual spending</strong>
+      {% if trip_costs.actual %}
+        {% for currency, amount in trip_costs.actual.items() %}
+          <span class="money">{{ '{:,.2f}'.format(amount) }} {{ currency }}</span>
+        {% endfor %}
+      {% else %}
+        <span class="muted">None yet</span>
+      {% endif %}
+    </div>
+  </div>
+  <p class="hint">Totals stay separated by currency. No exchange rates are
+    applied; provider totals are shown as returned.</p>
+  <p class="stat-big">
+    {% if expense_totals %}
+      {% for currency, amount in expense_totals.items() %}
+        <span class="money">{{ '{:,.2f}'.format(amount) }} {{ currency }}</span>{% if not loop.last %} <span class="muted">|</span> {% endif %}
+      {% endfor %}
+    {% else %}
+      No expenses recorded yet
+    {% endif %}
+  </p>
+  {% if expense_totals|length > 1 %}
+    <p class="hint">Amounts in different currencies are kept separate
+      and are not converted automatically.</p>
+  {% endif %}
+
+  {% if expense_summary %}
+    <ul class="list compact">
+      {% for row in expense_summary %}
+        <li>
+          <strong>{{ row.label }}</strong>
+          <span class="muted">
+            {% for currency, amount in row.totals.items() %}
+              {{ '{:,.2f}'.format(amount) }} {{ currency }}{% if not loop.last %} | {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if expenses %}
+    <table class="data-table">
+      <thead>
+        <tr><th>Date</th><th>Expense</th><th>Category</th><th class="num">Amount</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for expense in expenses %}
+          <tr>
+            <td>{{ expense.get('expense_date') }}</td>
+            <td>{{ expense.get('expense_name') }}</td>
+            <td><span class="badge">{{ expense.get('category') }}</span></td>
+            <td class="num money">{{ expense.formatted_amount() }}</td>
+            <td>
+              <form method="post"
+                    action="{{ url_for('expenses.delete_expense', expense_id=expense.expense_id) }}"
+                    class="inline-form" data-confirm="Delete this expense?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-ghost btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">No expenses yet.</p>
+  {% endif %}
+
+  <h3>Add an expense</h3>
+  <form method="post" action="{{ url_for('expenses.add_expense', trip_id=trip.trip_id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field-row">
+      <div>
+        <label for="expense_name">Description</label>
+        <input id="expense_name" name="expense_name" type="text" required maxlength="120">
+      </div>
+      <div>
+        <label for="category">Category</label>
+        <select id="category" name="category" required>
+          {% for value in expense_categories %}
+            <option value="{{ value }}">{{ value|replace('_', ' ')|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div>
+        <label for="amount">Amount</label>
+        <input id="amount" name="amount" type="number" step="0.01" min="0.01" required>
+      </div>
+      <div>
+        <label for="currency">Currency</label>
+        <select id="currency" name="currency">
+          {% for code in ['USD', 'EUR', 'GBP', 'JPY', 'THB', 'VND', 'KRW', 'CNY',
+                          'SGD', 'MYR', 'IDR', 'PHP', 'INR', 'LKR', 'AED', 'SAR'] %}
+            <option value="{{ code }}">{{ code }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="expense_date">Date</label>
+        <input id="expense_date" name="expense_date" type="date"
+               min="{{ trip.start_date }}" max="{{ trip.end_date }}">
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Add expense</button>
+  </form>
+</section>
+<!-- ----------------------------------------------------------- checklists -->
+<section class="card" id="checklists">
+  <h2>Checklists</h2>
+  {% if progress.total_items %}
+    <p class="muted">
+      {{ progress.completed_items }} of {{ progress.total_items }} items done
+      ({{ progress.progress_percent }}%) across {{ progress.checklists }} checklist(s).
+    </p>
+    <progress class="progress-track" max="100"
+              value="{{ progress.progress_percent }}"
+              aria-label="Checklist completion"></progress>
+  {% endif %}
+
+  {% if checklists %}
+    {% for checklist in checklists %}
+      {% set data = checklist.serialize() %}
+      <article class="checklist">
+        <header class="checklist-head">
+          <h3>{{ checklist.get('checklist_name') }}</h3>
+          <span class="muted small">
+            {{ data.completed_count }}/{{ data.item_count }}
+            ({{ data.progress_percent }}%)
+          </span>
+          <form method="post"
+                action="{{ url_for('checklists.delete_checklist', checklist_id=checklist.checklist_id) }}"
+                class="inline-form" data-confirm="Delete this checklist?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-ghost btn-sm">Delete list</button>
+          </form>
+        </header>
+
+        <ul class="list check-items">
+          {% for item in checklist.items %}
+            <li>
+              <form method="post"
+                    action="{{ url_for('checklists.toggle_item', item_id=item.item_id) }}"
+                    class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="check-label">
+                  <input type="checkbox" onchange="this.form.submit()"
+                         {% if item.is_done() %}checked{% endif %}>
+                  <span class="{{ 'done' if item.is_done() }}">{{ item.get('item_name') }}</span>
+                </label>
+              </form>
+              <form method="post"
+                    action="{{ url_for('checklists.delete_item', item_id=item.item_id) }}"
+                    class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-ghost btn-sm">&times;</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <form method="post"
+              action="{{ url_for('checklists.add_item', checklist_id=checklist.checklist_id) }}"
+              class="inline-form add-item-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input name="item_name" type="text" placeholder="Add an item" required
+                 maxlength="120">
+          <button type="submit" class="btn btn-ghost btn-sm">Add</button>
+        </form>
+      </article>
+    {% endfor %}
+  {% else %}
+    <p class="muted">No checklists yet.</p>
+  {% endif %}
+
+  <h3>New checklist</h3>
+  <form method="post" action="{{ url_for('checklists.add_checklist', trip_id=trip.trip_id) }}"
+        class="inline-form add-item-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input name="checklist_name" type="text" placeholder="Checklist name" required
+           maxlength="100">
+    <button type="submit" class="btn btn-primary">Create checklist</button>
+  </form>
+</section>
+{% endblock %}

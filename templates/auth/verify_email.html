@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1>Verify your email</h1>
+  <p class="muted">Enter the 6-digit code we sent to:</p>
+  <p><strong>{{ email or 'your email address' }}</strong></p>
+
+  {% if message %}<div class="flash">{{ message }}</div>{% endif %}
+  {% if errors.form %}<div class="flash flash-error">{{ errors.form }}</div>{% endif %}
+  {% if errors.code %}<p class="field-error">{{ errors.code }}</p>{% endif %}
+
+  {% if verified %}
+    <a class="btn btn-primary btn-block" href="{{ url_for('auth.login_page') }}">Sign in</a>
+  {% else %}
+    <form method="post" action="{{ url_for('auth.verify_email_page') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="email" value="{{ email }}">
+      <label for="code">Verification code</label>
+      <input id="code" name="code" type="text" inputmode="numeric"
+             pattern="[0-9]{6}" minlength="6" maxlength="6" autocomplete="one-time-code"
+             required>
+      <button type="submit" class="btn btn-primary btn-block">Verify email</button>
+    </form>
+
+    <form method="post" action="{{ url_for('auth.resend_verification_page') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="email" value="{{ email }}">
+      <button type="submit" class="btn btn-ghost btn-block">Resend code</button>
+    </form>
+  {% endif %}
+  <p class="muted small">
+    Already verified? <a href="{{ url_for('auth.login_page') }}">Sign in</a>.
+  </p>
+</div>
+{% endblock %}

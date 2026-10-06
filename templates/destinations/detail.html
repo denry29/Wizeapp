@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ destination.name }}</h1>
+    <p class="muted">{{ destination.location_label() }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('destinations.browse') }}">Back to catalogue</a>
+</div>
+
+<div class="card">
+  {% if destination.image_url %}
+    {# Same onerror fallback as the browse card: a dead Commons URL shows the
+       placeholder rather than a broken-image icon. #}
+    <img class="detail-image" src="{{ destination.image_url }}" alt="{{ destination.name }}"
+         onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
+    <div class="dest-placeholder detail-placeholder" aria-hidden="true" hidden>{{ destination.name[:1] }}</div>
+    {% set d = destination %}
+    {% include "destinations/_attribution.html" %}
+  {% else %}
+    <div class="dest-placeholder detail-placeholder" aria-hidden="true">{{ destination.name[:1] }}</div>
+    <p class="muted small">No photograph available for this attraction yet.</p>
+  {% endif %}
+
+  <p><span class="badge">{{ destination.category|replace('_', ' ')|capitalize }}</span>
+     <span class="badge">{{ destination.country }}</span>
+     {% if destination.city %}<span class="badge">{{ destination.city }}</span>{% endif %}
+  </p>
+
+  {% if destination.description %}<p>{{ destination.description }}</p>{% endif %}
+
+  <dl class="detail-list">
+    <dt>Estimated entrance fee</dt>
+    <dd>{{ destination.fee_label() }}</dd>
+    <dt>Source</dt>
+    <dd>{{ 'Catalogue' if not destination.is_custom else 'Added by you' }}</dd>
+  </dl>
+</div>
+
+{% if is_authenticated %}
+  <div class="card">
+    <h2>Add to one of your trips</h2>
+    {% if trips %}
+      <ul class="list trip-choice">
+        {% for trip in trips %}
+          <li>
+            <form method="post"
+                  action="{{ url_for('destinations.add_to_trip', trip_id=trip.trip_id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="destination_id" value="{{ destination.destination_id }}">
+              <span>
+                <strong>{{ trip.trip_name }}</strong>
+                <span class="muted small">{{ trip.start_date }} &rarr; {{ trip.end_date }}</span>
+              </span>
+              <button type="submit" class="btn btn-primary btn-sm">Add</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">You have no trips yet.</p>
+      <a class="btn btn-primary" href="{{ url_for('trips.create_trip') }}">Create a trip first</a>
+    {% endif %}
+  </div>
+{% else %}
+  <p class="muted">
+    <a href="{{ url_for('auth.login_page') }}">Sign in</a> to add this destination to a trip.
+  </p>
+{% endif %}
+{% endblock %}

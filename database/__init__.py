@@ -1,0 +1,1 @@
+"""Database layer package: connection management and schema."""
