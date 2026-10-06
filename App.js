@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Image,
   Linking,
   KeyboardAvoidingView,
@@ -78,6 +79,189 @@ function Field({ label, value, onChangeText, placeholder, secureTextEntry, multi
 
 function Card({ children, style }) {
   return <View style={[styles.card, style]}>{children}</View>;
+}
+
+function WelcomeScreen({ height, onLogin, onRegister, onExplore, onSocialUnavailable }) {
+  const introProgress = React.useRef(new Animated.Value(0)).current;
+  const animationStarted = React.useRef(false);
+  const animationInterval = React.useRef(null);
+  const symbolWidth = 112;
+  const loginMotion = (start) => ({
+    opacity: introProgress.interpolate({
+      inputRange: [start, Math.min(start + 0.06, 1)],
+      outputRange: [0, 1],
+      extrapolate: "clamp",
+    }),
+    transform: [{
+      translateY: introProgress.interpolate({
+        inputRange: [start, Math.min(start + 0.06, 1)],
+        outputRange: [22, 0],
+        extrapolate: "clamp",
+      }),
+    }],
+  });
+
+  const startAnimationOnLayout = () => {
+    if (animationStarted.current) return;
+    animationStarted.current = true;
+    const startedAt = Date.now();
+    const updateProgress = () => {
+      const progress = Math.min((Date.now() - startedAt) / 8000, 1);
+      introProgress.setValue(progress);
+      if (progress >= 1 && animationInterval.current != null) {
+        clearInterval(animationInterval.current);
+        animationInterval.current = null;
+      }
+    };
+    updateProgress();
+    animationInterval.current = setInterval(updateProgress, 16);
+  };
+
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => introProgress.setValue(1), 8300);
+    startAnimationOnLayout();
+    return () => {
+      clearTimeout(fallbackTimer);
+      if (animationInterval.current != null) {
+        clearInterval(animationInterval.current);
+        animationInterval.current = null;
+      }
+    };
+  }, [introProgress]);
+
+  const logoTranslateY = introProgress.interpolate({
+    inputRange: [0, 0.58, 0.68],
+    outputRange: [Math.max(0, (height - 182) / 2), Math.max(0, (height - 182) / 2), 0],
+    extrapolate: "clamp",
+  });
+  const wordmarkOpacity = introProgress.interpolate({
+    inputRange: [0.69, 0.78],
+    outputRange: [0, 1],
+    extrapolate: "clamp",
+  });
+  const wordmarkOffset = introProgress.interpolate({
+    inputRange: [0.69, 0.78],
+    outputRange: [8, 0],
+    extrapolate: "clamp",
+  });
+
+  return (
+    <View
+      onLayout={startAnimationOnLayout}
+      style={[styles.welcomeScreen, { minHeight: Math.max(height - 100, 620) }]}
+    >
+      <View style={styles.welcomeLogoStage}>
+        <Animated.View
+          style={[
+            styles.welcomeLogoGroup,
+            { transform: [{ translateY: logoTranslateY }] },
+          ]}
+        >
+          <View style={styles.welcomeLogoClip}>
+            <Animated.View
+              style={{
+                width: introProgress.interpolate({
+                  inputRange: [0, 0.08],
+                  outputRange: [0, symbolWidth],
+                  extrapolate: "clamp",
+                }),
+                height: 94,
+                overflow: "hidden",
+              }}
+            >
+              <Image
+                source={require("./static/logo-160.png")}
+                style={styles.welcomeLogoImage}
+                resizeMode="contain"
+                accessibilityLabel="Wize logo"
+              />
+            </Animated.View>
+          </View>
+          <Animated.View
+            style={{
+              opacity: wordmarkOpacity,
+              transform: [{ translateY: wordmarkOffset }],
+            }}
+          >
+            
+          </Animated.View>
+        </Animated.View>
+      </View>
+
+      <Animated.View style={[styles.welcomeLoginContent, loginMotion(0.78)]}>
+        <Text style={styles.welcomeLoginTitle}>Welcome to Wize</Text>
+      </Animated.View>
+
+      <Animated.View style={loginMotion(0.83)}>
+        <View style={styles.welcomeOptionsGroup}>
+      <View style={styles.welcomeSocialWrap}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Google sign-in is not configured"
+          onPress={() => onSocialUnavailable("Google")}
+          style={styles.welcomeSocialButton}
+        >
+          <Text style={styles.googleMark}>G</Text>
+          <Text style={styles.welcomeSocialText}>Continue with Google</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.welcomeSocialWrap}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Facebook sign-in is not configured"
+          onPress={() => onSocialUnavailable("Facebook")}
+          style={styles.welcomeSocialButton}
+        >
+          <Text style={styles.facebookMark}>f</Text>
+          <Text style={styles.welcomeSocialText}>Continue with Facebook</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.welcomeDivider}>
+        <View style={styles.welcomeDividerLine} />
+        <Text style={styles.welcomeDividerText}>or</Text>
+        <View style={styles.welcomeDividerLine} />
+      </View>
+
+      <View style={styles.welcomeSocialWrap}>
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={onLogin}
+          style={styles.welcomeEmailButton}
+        >
+          <MaterialIcons name="mail-outline" size={20} color="#ffffff" />
+          <Text style={styles.welcomeEmailText}>Continue with Email</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.welcomeAccountActions}>
+        <TouchableOpacity accessibilityRole="button" onPress={onLogin} style={styles.welcomeAccountAction}>
+          <Text style={styles.welcomeAccountText}>Log In</Text>
+        </TouchableOpacity>
+        <View style={styles.welcomeAccountDivider} />
+        <TouchableOpacity accessibilityRole="button" onPress={onRegister} style={styles.welcomeAccountAction}>
+          <Text style={styles.welcomeAccountText}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={onExplore}
+          style={styles.welcomeExploreAction}
+        >
+          <MaterialIcons name="explore" size={17} color="#147998" />
+          <Text style={styles.welcomeExploreText}>Explore destinations</Text>
+        </TouchableOpacity>
+        <Text style={styles.welcomeSocialNote}>
+          Google and Facebook sign-in aren’t configured yet.
+        </Text>
+      </View>
+        </View>
+      </Animated.View>
+    </View>
+  );
 }
 
 function isRemoteImageUri(uri) {
@@ -222,7 +406,7 @@ function hotelImageUris(hotel) {
 }
 
 function App() {
-  const { width: windowWidth } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [iconFontLoaded] = useFonts({
     MaterialIcons: require("@react-native-vector-icons/material-icons/fonts/MaterialIcons.ttf"),
     "MaterialIcons-Regular": require("@react-native-vector-icons/material-icons/fonts/MaterialIcons.ttf"),
@@ -1171,30 +1355,15 @@ function App() {
 
     if (screen === "welcome") {
       return (
-        <View style={styles.welcomeScreen}>
-          <View style={styles.welcomeIcon}>
-            <MaterialIcons name="explore" size={36} color="#ffffff" />
-          </View>
-          <Text style={styles.eyebrow}>TRAVEL, THOUGHTFULLY</Text>
-          <Text style={styles.welcomeTitle}>Your next journey, planned with Wize.</Text>
-          <Text style={styles.bodyText}>
-            Discover real destinations, organize trip details and keep your plans together.
-          </Text>
-          <View style={styles.welcomeActions}>
-            <Button icon="person-add" onPress={() => { setAuthMode("register"); setScreen("auth"); }}>
-              Create your account
-            </Button>
-            <Button secondary icon="login" onPress={() => { setAuthMode("login"); setScreen("auth"); }}>
-              Sign in
-            </Button>
-            <Button secondary icon="explore" onPress={() => setScreen("explore")}>
-              Explore destinations
-            </Button>
-          </View>
-          <Text style={styles.safetyNote}>
-            Planning only. Wize does not book or purchase travel.
-          </Text>
-        </View>
+        <WelcomeScreen
+          height={windowHeight}
+          onLogin={() => { setAuthMode("login"); setError(""); setScreen("auth"); }}
+          onRegister={() => { setAuthMode("register"); setError(""); setScreen("auth"); }}
+          onExplore={() => setScreen("explore")}
+          onSocialUnavailable={(provider) => {
+            setError(`${provider} sign-in is not configured yet. Continue with email instead.`);
+          }}
+        />
       );
     }
 
@@ -2364,7 +2533,7 @@ function App() {
           style={styles.app}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
-        {!showBottomTabs && (
+        {!showBottomTabs && screen !== "welcome" && (
           <View style={styles.header}>
             {showBackHeader ? (
               <TouchableOpacity
@@ -2535,10 +2704,33 @@ const styles = StyleSheet.create({
   screenTitle: { color: "#183b4e", fontSize: 29, lineHeight: 36, fontWeight: "800", letterSpacing: -0.7, marginBottom: 16 },
   backLink: { minHeight: 42, flexDirection: "row", alignItems: "center", alignSelf: "flex-start", gap: 6, marginBottom: 8 },
   backLinkText: { color: "#147998", fontSize: 14, fontWeight: "700" },
-  welcomeScreen: { flex: 1, justifyContent: "center", paddingVertical: 50 },
-  welcomeIcon: { width: 66, height: 66, alignItems: "center", justifyContent: "center", borderRadius: 22, backgroundColor: "#147998", marginBottom: 28 },
-  welcomeTitle: { color: "#183b4e", fontSize: 36, lineHeight: 42, fontWeight: "800", letterSpacing: -1, maxWidth: 420 },
-  welcomeActions: { alignItems: "flex-start", marginTop: 20 },
+  welcomeScreen: { flex: 1, justifyContent: "flex-start", paddingTop: 6, paddingBottom: 14 },
+  welcomeOptionsGroup: { width: "100%" },
+  welcomeLogoStage: { height: 172, alignItems: "center", justifyContent: "flex-start", overflow: "visible" },
+  welcomeLogoGroup: { alignItems: "center", width: "100%" },
+  welcomeLogoClip: { width: 112, height: 94, alignItems: "flex-start", overflow: "hidden" },
+  welcomeLogoImage: { width: 112, height: 94 },
+  welcomeTravelDot: { position: "absolute", width: 10, height: 10, borderRadius: 5, top: 34, left: "50%", marginLeft: -5, backgroundColor: "#13c4e8", borderWidth: 2, borderColor: "#ffffff" },
+  welcomeWordmark: { color: "#0756ad", fontSize: 38, fontWeight: "900", letterSpacing: -1.6, lineHeight: 44 },
+  welcomeLoginContent: { marginTop: 8, marginBottom: 12 },
+  welcomeLoginTitle: { color: "#183b4e", fontSize: 27, lineHeight: 34, fontWeight: "800", textAlign: "center", letterSpacing: -0.6 },
+  welcomeSocialWrap: { width: "100%", marginBottom: 10 },
+  welcomeSocialButton: { width: "100%", minHeight: 52, borderRadius: 15, borderWidth: 1, borderColor: "#dce7ea", backgroundColor: "#ffffff", flexDirection: "row", alignItems: "center", justifyContent: "center", position: "relative", shadowColor: "#173c4c", shadowOpacity: 0.04, shadowRadius: 7, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  welcomeSocialText: { color: "#203f50", fontSize: 15, fontWeight: "700" },
+  googleMark: { position: "absolute", left: 18, color: "#4285f4", fontSize: 20, fontWeight: "800" },
+  facebookMark: { position: "absolute", left: 23, color: "#1877f2", fontSize: 23, fontWeight: "900" },
+  welcomeDivider: { flexDirection: "row", alignItems: "center", gap: 13, marginTop: 1, marginBottom: 9 },
+  welcomeDividerLine: { flex: 1, height: 1, backgroundColor: "#dce7ea" },
+  welcomeDividerText: { color: "#78909a", fontSize: 13, fontWeight: "600" },
+  welcomeEmailButton: { width: "100%", minHeight: 52, borderRadius: 15, backgroundColor: "#147998", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  welcomeEmailText: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
+  welcomeAccountActions: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 5 },
+  welcomeAccountAction: { minWidth: 104, minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 14 },
+  welcomeAccountText: { color: "#147998", fontSize: 15, fontWeight: "800" },
+  welcomeAccountDivider: { width: 1, height: 19, backgroundColor: "#dce7ea" },
+  welcomeExploreAction: { alignSelf: "center", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, minHeight: 40, paddingHorizontal: 14, marginTop: 4 },
+  welcomeExploreText: { color: "#147998", fontSize: 14, fontWeight: "700" },
+  welcomeSocialNote: { color: "#84959c", fontSize: 11, lineHeight: 16, textAlign: "center", marginTop: 1 },
   homeScreen: { paddingBottom: 20 },
   greetingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 20 },
   greetingCopy: { flex: 1 },
