@@ -46,16 +46,14 @@ from database.db import DatabaseManager          # noqa: E402
 from services.commons import (                   # noqa: E402
     CommonsClient, ImageCandidate, build_attribution)
 
-#: A candidate must reach this score before an image is written.  A perfect
-#: name+city+country match scores 0.9; name-only matches top out at 0.6, so
-#: the default deliberately rejects anything not confirmed by location.
+#: Require a good match before saving a photo. Name, city, and country together
+#: score 0.9, while a name-only match tops out at 0.6.
 DEFAULT_MIN_SCORE = 0.75
 
-#: Statuses that still need attention on a later run.
+#: These statuses can be tried again on a later run.
 RETRYABLE = {"error"}
 
-#: ``image_url`` values that are not real remote photos (blank or the literal
-#: placeholder) and may therefore be replaced.
+#: Values that mean ``image_url`` isn't a real photo, so it's okay to replace.
 PLACEHOLDER_VALUES = {"", "n/a", "na", "none", "null", "todo", "placeholder"}
 
 
@@ -78,8 +76,7 @@ class FetchReport:
     errors: int = 0
     duplicates_avoided: int = 0
     dry_run: bool = False
-    #: ``(destination_id, name, city, country, reason)`` - the exact shape the
-    #: ``--failures-csv`` file needs, so a later retry pass can be driven from it.
+    #: Rows for ``--failures-csv``. Keeping this shape makes retrying them easier.
     review_rows: list[tuple[int, str, str, str, str]] = field(default_factory=list)
     error_rows: list[tuple[int, str, str, str, str]] = field(default_factory=list)
 
@@ -201,7 +198,7 @@ def fetch_images(db: DatabaseManager, client: CommonsClient, *,
         city, country = row["city"], row["country"]
 
         if _has_real_image(row):
-            # Never clobber a photo somebody already put there.
+            # Leave any photo that's already been added alone.
             report.skipped_has_image += 1
             continue
 
@@ -227,7 +224,7 @@ def fetch_images(db: DatabaseManager, client: CommonsClient, *,
 
         best = result.best
         if best.score < min_score:
-            # Results existed but were not clearly this destination.
+            # We found photos, but none looked like a confident match.
             report.review += 1
             report.review_rows.append(
                 (destination_id, name, city or "", country or "",
@@ -242,7 +239,7 @@ def fetch_images(db: DatabaseManager, client: CommonsClient, *,
             continue
 
         if best.source_page_url in used_pages:
-            # Same file already backs another destination - take the runner-up.
+            # This photo is already used, so try the next best match.
             alternative = next(
                 (c for c in result.candidates[1:]
                  if c.score >= min_score

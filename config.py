@@ -38,8 +38,6 @@ _load_env_file()
 
 MIN_DESTINATIONS = 300          # dataset requirement enforced by seed + tests
 
-# Module-level paths (mirrored by the config classes below) so scripts can
-# `from config import DATABASE_PATH, SCHEMA_PATH, DATASET_PATH` directly.
 DATABASE_PATH = DATABASE_DIR / "wize.db"
 SCHEMA_PATH = DATABASE_DIR / "schema.sql"
 DATASET_PATH = DATA_DIR / "asia_destinations.json"
@@ -59,7 +57,7 @@ def _load_or_create_secret_key() -> str:
 
     generated = secrets.token_hex(32)
     key_file.write_text(generated, encoding="utf-8")
-    try:                                    # never leave the key world readable
+    try:                                    # Keep the key file private.
         os.chmod(key_file, 0o600)
     except OSError:                         # pragma: no cover - Windows
         pass
@@ -78,7 +76,7 @@ class BaseConfig:
     # --- security ---------------------------------------------------------
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = False          # True behind HTTPS in production
+    SESSION_COOKIE_SECURE = False          # Turn this on when production uses HTTPS.
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 24 * 14   # 14 days
     MAX_CONTENT_LENGTH = 2 * 1024 * 1024
 
@@ -156,10 +154,10 @@ class TestingConfig(BaseConfig):
     TESTING = True
     SECRET_KEY = "wize-test-key-not-for-production"
     DATABASE_PATH = DATABASE_DIR / "wize_test.db"
-    #: A cheaper PBKDF2 round count keeps the suite fast.  Production keeps the
-    #: strong default (260000) - never lower it outside tests.
+    #: Use fewer PBKDF2 rounds in tests so they finish faster. Keep production
+    #: at the stronger default (260000); don't lower it outside the test setup.
     PASSWORD_HASH_METHOD = "pbkdf2:sha256:1000"
-    MIN_DESTINATIONS = 1                     # tests seed a tiny fixture dataset
+    MIN_DESTINATIONS = 1                     # Tests use a small sample dataset.
 
 
 class ProductionConfig(BaseConfig):

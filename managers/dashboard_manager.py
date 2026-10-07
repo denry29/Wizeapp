@@ -25,7 +25,7 @@ class DashboardManager:
 
     def __init__(self, db: DatabaseManager):
         self.db = db
-        # Composition: reuse the existing managers instead of duplicating SQL.
+        # Reuse the existing managers here instead of writing the same SQL twice.
         self.trips = TripManager(db)
         self.schedules = ScheduleManager(db)
         self.expenses = ExpenseManager(db)

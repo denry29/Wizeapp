@@ -188,7 +188,7 @@ def _catalogue_count(database: Path) -> int:
         connection.close()
 
 
-#: Reference list used only to assert that the dataset is Asian.
+#: Use this list to check that the dataset only includes Asian countries.
 ASIAN_COUNTRIES = {
     "Bangladesh", "Bahrain", "Bhutan", "Cambodia", "China", "Hong Kong",
     "India", "Indonesia", "Iran", "Iraq", "Israel", "Japan", "Jordan",

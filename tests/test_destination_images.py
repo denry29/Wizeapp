@@ -137,7 +137,7 @@ def test_build_query_uses_name_city_and_country():
     assert commons.build_query("Angkor Wat", "Siem Reap", "Cambodia") == \
         "Angkor Wat Siem Reap Cambodia"
     assert commons.build_query("Petra", None, "Jordan") == "Petra Jordan"
-    # Parenthetical disambiguation aids the match, so it is preserved.
+    # Keep the extra words in parentheses; they help find the right place.
     assert "Golden Pavilion" in commons.build_query(
         "Kinkaku-ji (Golden Pavilion)", "Kyoto", "Japan")
 
@@ -441,7 +441,7 @@ def test_review_rows_are_not_reprocessed_by_default(ledger_db):
     client = make_client({"Petra": _payload(_page("File:Petra Treasury.jpg"))})
     fetcher.fetch_images(ledger_db, client, verbose=False)
     assert ledger_db.query_one("SELECT status FROM destination_images")["status"] == "review"
-    # Not an 'error', so a re-run leaves it pending a human decision.
+    # This needs a person to review, so a normal rerun should leave it alone.
     assert fetcher.fetch_images(ledger_db, client, verbose=False).total == 0
 
 
@@ -748,6 +748,6 @@ def test_placeholder_stays_hidden_until_an_image_fails(app, db, client):
                    ["https://upload.wikimedia.org/ok.jpg", destination_id])
     body = client.get(f"/destinations/{destination_id}",
                       headers={"Accept": "text/html"}).get_data(as_text=True)
-    # The image is not marked hidden; only its placeholder partner is.
+    # Show the real image and keep only its placeholder hidden.
     assert '<img class="detail-image" src="https://upload.wikimedia.org/ok.jpg"' in body
     assert 'detail-placeholder" aria-hidden="true" hidden' in body

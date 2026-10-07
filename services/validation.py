@@ -10,7 +10,7 @@ import re
 from datetime import date, datetime, time
 from typing import Any, Iterable, Mapping
 
-# Reasonable e-mail shape check (RFC 5322 is far too permissive to be useful).
+# Keep the email check practical; the full RFC rules allow far too much here.
 EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"

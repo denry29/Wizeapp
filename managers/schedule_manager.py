@@ -50,8 +50,8 @@ class ScheduleManager(BaseManager):
             "SELECT trip_id, user_id, start_date, end_date, trip_name FROM trips "
             "WHERE trip_id = ? AND user_id = ?", [trip_id, user_id])
         if row is None:
-            # Identical response for "missing" and "someone else's" trip, so the
-            # endpoint cannot be used to discover other users' trip ids.
+            # Give the same response for missing and other people's trips, so
+            # nobody can use this endpoint to guess valid trip IDs.
             raise NotFoundError("Trip not found.", "trip")
         return row
 

@@ -1,12 +1,12 @@
-/* Wize front-end behaviour (progressive enhancement only).
+/* Wize front-end extras.
  *
- * The server renders complete HTML; this file only adds confirmations for
- * destructive actions and a small helper for the JSON API.
+ * The server already renders the page. This file just confirms risky actions
+ * and gives the page a small helper for JSON API requests.
  */
 (function () {
   "use strict";
 
-  // Confirm before destructive submits (data-confirm="...").
+  // Ask before submitting a form marked as a destructive action.
   document.addEventListener("submit", function (event) {
     var form = event.target;
     if (form && form.dataset && form.dataset.confirm) {
@@ -16,13 +16,13 @@
     }
   });
 
-  // Fetch the CSRF token from the page so API calls can authenticate.
+  // Grab the CSRF token from the page for API requests.
   function csrfToken() {
     var field = document.querySelector('input[name="csrf_token"]');
     return field ? field.value : "";
   }
 
-  // Small JSON helper for future fetch-based UI enhancements.
+  // Keep JSON requests in one place so the page can reuse the same setup.
   window.Wize = {
     csrfToken: csrfToken,
 

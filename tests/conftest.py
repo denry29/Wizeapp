@@ -26,7 +26,7 @@ from scripts.seed_destinations import INSERT_SQL               # noqa: E402
 
 TEST_DB = PROJECT_ROOT / "database" / "wize_test.db"
 
-#: Minimal catalogue used by the functional tests.
+#: A small set of destinations for the tests to use.
 FIXTURE_DESTINATIONS = [
     {"name": "Kinkaku-ji", "name_key": "kinkaku ji", "country": "Japan",
      "city": "Kyoto", "category": "historical_site",
@@ -120,7 +120,7 @@ class CsrfClient:
             token = session_data.get("_csrf_token")
         if token:
             return token
-        self._inner.get("/auth/login")          # establishes a session
+        self._inner.get("/auth/login")          # Visiting login sets up the session.
         with self._inner.session_transaction() as session_data:
             return session_data.get("_csrf_token", "")
 
@@ -149,7 +149,7 @@ class CsrfClient:
     def session_transaction(self):
         return self._inner.session_transaction()
 
-    def __getattr__(self, name):                # expose the rest of the API
+    def __getattr__(self, name):                # Pass any other calls through as usual.
         return getattr(self._inner, name)
 
 

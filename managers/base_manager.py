@@ -59,11 +59,11 @@ class BaseManager(ABC):
     owner_column: str | None = "user_id"  # None for the shared catalogue
     model: type[BaseModel]                # overridden by every subclass
 
-    #: columns a client is allowed to write (protects against mass assignment)
+    #: Only let clients write these columns, so they can't change protected fields.
     writable_fields: tuple[str, ...] = ()
 
     def __init__(self, db: DatabaseManager):
-        self.db = db                      # encapsulated dependency
+        self.db = db                      # Keep the database helper with this manager.
 
     # --------------------------------------------------------- abstraction --
     @abstractmethod

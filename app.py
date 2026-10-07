@@ -50,7 +50,7 @@ def create_app(config_name: str | None = None,
     register_cli(app)
 
     # ----------------------------------------------------------- managers ---
-    # One instance of each manager per app; they share the DatabaseManager.
+    # Set up each manager once and let them all use the same database helper.
     app.extensions["managers"] = {
         "auth": AuthManager(db),
         "trips": TripManager(db),

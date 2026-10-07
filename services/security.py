@@ -58,7 +58,7 @@ def csrf_protect(view: Callable) -> Callable:
 
     @wraps(view)
     def wrapper(*args: Any, **kwargs: Any):
-        # A CSRF token must exist before the first login/register POST.
+        # Make sure the page has a CSRF token before its first login or signup.
         generate_csrf_token()
         if request.method not in SAFE_METHODS and not validate_csrf_token():
             if _wants_json():

@@ -40,15 +40,8 @@ p  { margin: .4rem 0; }
 }
 .brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; color: var(--text); }
 .brand:hover { text-decoration: none; }
-/* logo-160.png is the trimmed artwork at its natural 160x120 aspect, shown
-   inside a square badge. `object-fit: contain` fits the whole mark inside the
-   box with nothing cropped or squashed; the spare height becomes symmetric
-   padding rather than the uneven bands a stretched image would leave.
-   The badge is a soft tint rather than a grey outline: the artwork is opaque
-   white on a white header, so with no fill and no border the radius would clip
-   white against white and the box would be invisible. 4px padding keeps the
-   artwork at 32px wide - the size chosen for the wordmark beside it - and
-   border-box (set globally) absorbs that padding inside the 40px. */
+/* Keep the full logo visible inside the square badge without stretching it.
+   The soft background helps its white artwork stand out against the header. */
 .brand-logo {
   display: block; flex: none;
   width: 40px; height: 40px;
@@ -175,9 +168,8 @@ input:focus, select:focus, textarea:focus {
   display: grid; place-items: center; font-size: 2rem; color: var(--primary); font-weight: 700;
 }
 .detail-image { width: 100%; border-radius: var(--radius); margin-bottom: 1rem; }
-/* The rule above sets `display: grid`, which beats the user-agent rule for the
-   `hidden` attribute, so restate it: a placeholder only becomes visible when a
-   failed <img> reveals it through its onerror handler. */
+/* Grid layout overrides the browser's default hidden style, so restore it here.
+   The placeholder should only show if the image fails to load. */
 .dest-placeholder[hidden] { display: none; }
 
 /* ---------------------------------------------------------- hotel search */
@@ -233,8 +225,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* --------------------------------------------- destination photo credits -- */
-/* Wikimedia requires the author, the licence and a link to the source page
-   to be shown with every reused image. */
+/* Reused Wikimedia photos need the creator, licence, and source link shown. */
 .photo-credit {
   margin: .35rem 0 .25rem;
   font-size: .68rem;

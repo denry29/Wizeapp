@@ -33,25 +33,24 @@ from typing import Any, Callable
 
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 
-#: Wikimedia asks every client to identify itself with a contact URL.
+#: Wikimedia asks clients to include a contact URL in their user agent.
 USER_AGENT = ("Wize-Destination-Images/1.0 "
               "(https://github.com/wize/wize; educational project) "
               "python-urllib/3")
 
-#: File types we are willing to embed.  Commons also hosts SVG/PDF/TIF which
-#: either do not render in an <img> tag or are huge, so they are filtered out.
+#: Stick to image files that work in an <img>. Commons also has SVG/PDF/TIF,
+#: which may not render here or can be very large.
 ALLOWED_EXTENSIONS = (".jpg", ".jpeg", ".png")
 
-#: Licences that are freely reusable.  Anything else (fair use, "permission
-#: granted", all-rights-reserved) is rejected so the catalogue stays legally
-#: clean.  Compared case-insensitively against the licence short name.
+#: These licence labels are okay to reuse. Skip anything else (like fair use
+#: or "all rights reserved") so we don't add photos without clear permission.
 ALLOWED_LICENCE_KEYWORDS = ("cc", "public domain", "pd-", "no restrictions",
                             "attribution", "gfdl")
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _WS_RE = re.compile(r"\s+")
 
-#: Commons file names are prefixed "File:"; the rest is the meaningful stem.
+#: Commons titles start with "File:"; this pattern strips that part off.
 _FILE_PREFIX_RE = re.compile(r"^file\s*:\s*", re.IGNORECASE)
 
 
@@ -192,11 +191,11 @@ class CommonsClient:
                  opener: Callable[[urllib.request.Request, float], Any] | None = None,
                  sleeper: Callable[[float], None] = time.sleep) -> None:
         self.timeout = timeout
-        #: ~3 requests/second is well inside Wikimedia's limits for scripts.
+        #: Keep requests to about 3 per second, comfortably under Wikimedia's limit.
         self.min_interval = min_interval
         self.retries = max(1, retries)
         self.backoff = backoff
-        #: Injected by the tests so no real network call is ever made.
+        #: Tests pass in a fake opener here so they never call the real site.
         self._opener = opener or self._default_opener
         self._sleep = sleeper
         self._last_call = 0.0
@@ -229,7 +228,7 @@ class CommonsClient:
                 return json.loads(payload)
             except urllib.error.HTTPError as error:
                 last_error = f"HTTP {error.code}"
-                # 429 and 5xx are transient - back off and try again.
+                # These rate-limit/server errors may clear up, so wait and retry.
                 if error.code not in (429, 500, 502, 503, 504):
                     raise CommonsError(f"Commons API returned HTTP {error.code}")
             except (urllib.error.URLError, socket.timeout, TimeoutError) as error:
@@ -261,11 +260,11 @@ class CommonsClient:
                 "formatversion": "1",
                 "generator": "search",
                 "gsrsearch": query,
-                "gsrnamespace": "6",          # File: namespace only
+                "gsrnamespace": "6",          # Search file pages, not articles.
                 "gsrlimit": str(max(1, min(limit, 50))),
                 "prop": "imageinfo",
                 "iiprop": "url|extmetadata|size",
-                "iiurlwidth": "1024",          # request a sane thumbnail
+                "iiurlwidth": "1024",          # Ask Commons for a usable thumbnail.
             })
         except CommonsError as error:
             return ImageSearchResult(query=query, error=str(error))
@@ -277,7 +276,7 @@ class CommonsClient:
               data: dict[str, Any]) -> list[ImageCandidate]:
         """Turn the raw API payload into scored candidates, best first."""
         pages = ((data.get("query") or {}).get("pages") or {})
-        if isinstance(pages, list):          # defensive: formatversion drift
+        if isinstance(pages, list):          # Handle either shape if the API changes.
             pages = {str(p.get("pageid")): p for p in pages}
 
         candidates: list[ImageCandidate] = []
@@ -299,7 +298,7 @@ class CommonsClient:
 
             licence = field_value("LicenseShortName") or field_value("License")
             if not _is_allowed_licence(licence):
-                # Non-free or unclear terms - skip rather than mis-attribute.
+                # Skip unclear or non-free photos rather than crediting them wrong.
                 continue
 
             url = info.get("thumburl") or info.get("url")
@@ -319,6 +318,6 @@ class CommonsClient:
                 score=score_candidate(name, city, country, title),
             ))
 
-        # Highest score first; ties broken by the larger image.
+        # Put the best match first, using image size to break ties.
         candidates.sort(key=lambda c: (c.score, c.width * c.height), reverse=True)
         return [c for c in candidates if c.score > 0]

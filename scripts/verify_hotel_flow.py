@@ -80,8 +80,8 @@ def main() -> int:
         outcome = 0
     else:
         print("provider message:", payload.get("error"))
-        # A clear provider message (not a crash, not "configure the key")
-        # means the server-side chain is healthy.
+        # A useful provider response means the server-side request worked,
+        # even if the provider couldn't return hotels.
         outcome = 0 if "Configure STAYING_API_KEY" not in (
             payload.get("error") or "") else 1
 

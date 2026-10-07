@@ -17,7 +17,7 @@ import json
 
 import pytest
 
-#: Icon files that must exist in ``static/`` for the phone branding to work.
+#: Make sure all the icons used by the app are in ``static/``.
 ICON_FILES = [
     "favicon.ico",
     "favicon-32.png",
@@ -28,7 +28,7 @@ ICON_FILES = [
     "logo-160.png",
 ]
 
-#: ``<meta>`` tags a phone needs before "Add to Home Screen" is offered.
+#: These tags let phones offer "Add to Home Screen" with the right branding.
 REQUIRED_META = [
     'name="theme-color"',
     'name="apple-mobile-web-app-capable"',
@@ -75,7 +75,7 @@ def test_apple_touch_icon_is_opaque(client):
     types 4 and 6 do.
     """
     data = client.get("/static/apple-touch-icon.png").data
-    # IHDR colour type lives at byte 25 of the PNG payload.
+    # The PNG colour type is stored at byte 25.
     assert data[25] in (2, 3), "apple-touch-icon.png must not have an alpha channel"
 
 

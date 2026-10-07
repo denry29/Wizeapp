@@ -34,8 +34,7 @@ class DatabaseManager:
         app.teardown_appcontext(self.close_connection)
         app.extensions["wize_db"] = self
         if self.schema_path and not self._initialised:
-            # A temporary context is needed because the connection is bound to
-            # flask.g, which only exists while an application context is active.
+            # The connection lives on flask.g, so create it inside an app context.
             with app.app_context():
                 self.create_tables()
 
@@ -111,10 +110,8 @@ class DatabaseManager:
         row = self.query_one(query, params)
         return row[0] if row is not None and row[0] is not None else default
 # ------------------------------------------------------------ schema --
-    #: Attribution columns added for Wikimedia Commons imagery.  They are
-    #: declared in schema.sql but applied here so an existing database is
-    #: upgraded in place; see the note in schema.sql for why this is not a
-    #: plain ALTER TABLE.
+    #: These Wikimedia photo-credit columns are also added to older databases
+    #: here; see schema.sql for why a plain ALTER TABLE isn't enough.
     IMAGE_COLUMNS = ("image_title", "image_creator", "image_source_url",
                      "image_license", "image_license_url", "image_attribution")
     OPTIONAL_COLUMNS = {
@@ -132,8 +129,8 @@ class DatabaseManager:
             ),
         },
         "users": {
-            # Existing local accounts predate email verification. Preserve
-            # their access; all accounts created by the new flow are explicit 0.
+            # Older local accounts didn't use email verification, so keep them
+            # active. New accounts get an explicit unverified value instead.
             "email_verified": "INTEGER NOT NULL DEFAULT 1",
             "email_verified_at": "TEXT",
             "last_login_at": "TEXT",
