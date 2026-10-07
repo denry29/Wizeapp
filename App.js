@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  Alert,
   ActivityIndicator,
   Animated,
   Image,
@@ -729,6 +730,34 @@ function App() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const requestTripDeletion = (item) => {
+    const deleteTrip = () => {
+      void act(async () => {
+        await api(`/api/trips/${item.trip_id}`, { method: "DELETE" });
+        setTrips((current) => current.filter(
+          (currentTrip) => currentTrip.trip_id !== item.trip_id
+        ));
+        if (trip?.trip_id === item.trip_id) {
+          setTrip(null);
+          setScreen("trips");
+        }
+      }, "Trip deleted.");
+    };
+    const message =
+      `Delete "${item.trip_name}" and all its destinations, activities, ` +
+      "expenses, checklists, and notes? This cannot be undone.";
+
+    if (Platform.OS === "web") {
+      if (window.confirm(message)) deleteTrip();
+      return;
+    }
+
+    Alert.alert("Delete trip?", message, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: deleteTrip },
+    ]);
   };
 
   async function submitAuth() {
@@ -1608,27 +1637,40 @@ function App() {
               </Button>
               <View style={styles.tripList}>
                 {trips.map((item) => (
-                  <TouchableOpacity
+                  <View
                     key={item.trip_id}
-                    accessibilityRole="button"
-                    onPress={() => openTrip(item)}
                     style={styles.tripListCard}
                   >
-                    <View style={styles.tripIconWrap}>
-                      <MaterialIcons name="luggage" size={22} color="#147998" />
-                    </View>
-                    <View style={styles.tripListCopy}>
-                      <Text numberOfLines={1} style={styles.cardTitle}>{item.trip_name}</Text>
-                      <View style={styles.inlineMeta}>
-                        <MaterialIcons name="calendar-today" size={15} color="#668494" />
-                        <Text style={styles.muted}>{item.start_date} – {item.end_date}</Text>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      onPress={() => openTrip(item)}
+                      style={styles.tripListOpenArea}
+                    >
+                      <View style={styles.tripIconWrap}>
+                        <MaterialIcons name="luggage" size={22} color="#147998" />
                       </View>
-                      <Text numberOfLines={1} style={styles.muted}>
-                        {item.budget ? `${item.budget} ${item.budget_currency || ""} budget` : "Budget not set"}
-                      </Text>
-                    </View>
-                    <MaterialIcons name="arrow-forward" size={20} color="#668494" />
-                  </TouchableOpacity>
+                      <View style={styles.tripListCopy}>
+                        <Text numberOfLines={1} style={styles.cardTitle}>{item.trip_name}</Text>
+                        <View style={styles.inlineMeta}>
+                          <MaterialIcons name="calendar-today" size={15} color="#668494" />
+                          <Text style={styles.muted}>{item.start_date} – {item.end_date}</Text>
+                        </View>
+                        <Text numberOfLines={1} style={styles.muted}>
+                          {item.budget ? `${item.budget} ${item.budget_currency || ""} budget` : "Budget not set"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete ${item.trip_name}`}
+                      disabled={busy}
+                      onPress={() => requestTripDeletion(item)}
+                      style={[styles.tripDeleteButton, busy && styles.disabled]}
+                    >
+                      <MaterialIcons name="delete-outline" size={19} color="#a12c25" />
+                      <Text style={styles.tripDeleteText}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
                 ))}
               </View>
               {!trips.length && (
@@ -2770,8 +2812,11 @@ const styles = StyleSheet.create({
   destinationCardWrap: { position: "relative" },
   favoriteRemove: { position: "absolute", top: 10, right: 10, width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 20, backgroundColor: "#ffffff", elevation: 2 },
   tripList: { gap: 10, marginTop: 8 },
-  tripListCard: { minHeight: 84, flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e6eef0", borderRadius: 17, padding: 13 },
+  tripListCard: { minHeight: 84, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e6eef0", borderRadius: 17, padding: 13 },
+  tripListOpenArea: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 12 },
   tripListCopy: { flex: 1, minWidth: 0 },
+  tripDeleteButton: { minHeight: 42, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 4, paddingHorizontal: 8, borderRadius: 11, backgroundColor: "#fff0ed" },
+  tripDeleteText: { color: "#a12c25", fontSize: 12, fontWeight: "700" },
   destinationTripPicker: { marginTop: 22 },
   profileCard: { alignItems: "center", padding: 22, backgroundColor: "#ffffff", borderRadius: 20, borderWidth: 1, borderColor: "#e6eef0" },
   profileAvatarWrap: { position: "relative", width: 104, height: 104, borderRadius: 52, alignItems: "center", justifyContent: "center", backgroundColor: "#e7f1f2", marginBottom: 14, overflow: "visible" },
